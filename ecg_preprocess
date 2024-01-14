@@ -1,0 +1,105 @@
+import pandas as pd
+
+# Create two rows of data
+row_Snomed_CT = column_Snomed_CT.unique()
+
+# Create a DataFrame with the rows
+newDF = pd.DataFrame(columns=column_Acronym_Name)
+
+newDF
+
+
+import pandas as pd
+import glob
+import os
+
+# 指定文件夹路径和后缀
+folder_path = 'ecg'
+file_extension = 'hea'  # 你的文件后缀
+
+# 使用glob筛选指定后缀的文件
+file_pattern = os.path.join(folder_path, f'*.{file_extension}')
+file_list = glob.glob(file_pattern)
+
+# 初始化一个空的数据框
+result_df = pd.DataFrame()
+import numpy as np
+age_Column_data = np.array([])
+sex_Column_data = np.array([])
+# 遍历文件并读取数据
+for file_path in file_list:
+    import re
+
+    # 打开文件
+    with open(file_path, 'r') as file:
+        # print(file)
+        notebook_filename = os.path.basename(os.getcwd())
+        file_name = os.path.basename(file_path)
+        
+        # 使用os.path.basename获取文件名
+        file_name_with_extension = os.path.basename(file_path)
+        # 使用os.path.splitext获取文件名和后缀
+        file_name, file_extension = os.path.splitext(file_name_with_extension)
+        # print("当前Jupyter Notebook文件的文件名:", file_name)
+        for line in file:
+            if '#Dx' in line:
+                # 获取包含目标字符串的部分
+                Snomed_CT_substring = line.split('#Dx')[-1].strip()
+                # print(Snomed_CT_substring)
+                # 使用逗号分割字符串，并去除特殊符号只保留数字
+                Dx_result_array = ["".join(char for char in item if char.isdigit()) for item in Snomed_CT_substring.split(",")]
+                numeric_Dx_result_array = [int(element) for element in Dx_result_array]
+                # 输出结果数组
+                # print(numeric_Dx_result_array)
+                # first_row = newDF.iloc[0]
+                # first_row=column_Snomed_CT
+                # print("\nFirst Row:")
+                # print(first_row)
+                patient_Dx_result_array = [1 if element in numeric_Dx_result_array else 0 for element in column_Snomed_CT]
+                newDF.loc[file_name] = patient_Dx_result_array
+                # Print the result
+                # print(patient_Dx_result_array)
+                # Add a new row with a row name
+                # new_row = pd.Series(patient_Dx_result_array, index=column_Acronym_Name, name='Snomed_CT')
+                # newDF = newDF.append(new_row)
+            if '#Age' in line:
+                Age_substring = line.split('#Age')[-1].strip()
+                # 打印结果
+                cleaned_Age_string = re.sub(r'[^a-zA-Z0-9\s]', '', Age_substring)
+                # Age_result_array = ["".join(char for char in item if char.isdigit()) for item in Age_substring.split(",")]
+                # numeric_Age_result_array = [int(element) for element in Age_result_array]
+                # print(cleaned_Age_string)
+                age_Column_data = np.append(age_Column_data, cleaned_Age_string)
+            if '#Sex' in line:
+                Sex_substring = line.split('#Sex')[-1].strip()
+                # 打印结果
+                cleaned_Sex_string = re.sub(r'[^a-zA-Z0-9\s]', '', Sex_substring)
+                # Age_result_array = ["".join(char for char in item if char.isdigit()) for item in Age_substring.split(",")]
+                # numeric_Age_result_array = [int(element) for element in Age_result_array]
+                # print(cleaned_Age_string)
+                sex_Column_data = np.append(sex_Column_data, cleaned_Sex_string)
+print(age_Column_data)
+newDF
+
+newDF['Age'] = age_Column_data
+# 获取最后一列的数据
+last_column = newDF.pop(newDF.columns[-1])
+# 将最后一列数据插入到第1列
+newDF.insert(0, 'Age', last_column)
+
+newDF['Sex'] = sex_Column_data
+# 获取最后一列的数据
+last_column = newDF.pop(newDF.columns[-1])
+# 将最后一列数据插入到第1列
+newDF.insert(0, 'Sex', last_column)
+
+# newDF.insert(0, 'Age', age_Column_data)
+sorted_df = newDF.sort_index(axis=0)
+sorted_df
+# print(sorted_df) 
+
+# # 对数据框按照列名排序
+# df_sorted = sorted_df.sort_index(axis=1)
+
+# # 打印排序后的数据框
+# print(df_sorted)
