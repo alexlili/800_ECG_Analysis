@@ -1,3 +1,9 @@
+%pip install scipy
+import pandas as pd
+import glob
+import os
+import scipy.io
+from scipy.io import loadmat
 import pandas as pd
 
 # Create two rows of data
@@ -5,42 +11,42 @@ row_Snomed_CT = column_Snomed_CT.unique()
 
 # Create a DataFrame with the rows
 newDF = pd.DataFrame(columns=column_Acronym_Name)
-
+# Add a new row with a row name
+# new_row = pd.Series(row_Snomed_CT, index=column_Acronym_Name, name='Snomed_CT')
+# newDF = newDF.append(new_row)
 newDF
-
-
-import pandas as pd
-import glob
-import os
-
 # 指定文件夹路径和后缀
 folder_path = 'ecg'
-file_extension = 'hea'  # 你的文件后缀
+file_extension_hea = 'hea'  # hea文件后缀
+file_extension_mat = 'mat'  # mat文件后缀
 
-# 使用glob筛选指定后缀的文件
-file_pattern = os.path.join(folder_path, f'*.{file_extension}')
-file_list = glob.glob(file_pattern)
+# 使用glob筛选hea指定后缀的文件
+file_pattern_hea = os.path.join(folder_path, f'*.{file_extension_hea}')
+file_list_hea = glob.glob(file_pattern_hea)
 
 # 初始化一个空的数据框
 result_df = pd.DataFrame()
 import numpy as np
 age_Column_data = np.array([])
 sex_Column_data = np.array([])
+ecg_Column_data = np.array([])
 # 遍历文件并读取数据
-for file_path in file_list:
+for file_path in file_list_hea:
     import re
-
+    # 使用os.path.basename获取文件名
+    file_name_with_extension = os.path.basename(file_path)
+    # 使用os.path.splitext获取文件名和后缀
+    file_name, file_extension_hea = os.path.splitext(file_name_with_extension)
+    # print("当前Jupyter Notebook文件的文件名:", file_name)
+    full_path = f"ecg/{file_name}.mat"
+    mat_data = loadmat(full_path)
+    ecg_data = mat_data['val']
+    # print(ecg_data)
+    data_str = np.array2string(ecg_data, separator=',', max_line_width=np.inf)
+    ecg_Column_data = np.append(ecg_Column_data, data_str)
     # 打开文件
     with open(file_path, 'r') as file:
         # print(file)
-        notebook_filename = os.path.basename(os.getcwd())
-        file_name = os.path.basename(file_path)
-        
-        # 使用os.path.basename获取文件名
-        file_name_with_extension = os.path.basename(file_path)
-        # 使用os.path.splitext获取文件名和后缀
-        file_name, file_extension = os.path.splitext(file_name_with_extension)
-        # print("当前Jupyter Notebook文件的文件名:", file_name)
         for line in file:
             if '#Dx' in line:
                 # 获取包含目标字符串的部分
@@ -78,9 +84,10 @@ for file_path in file_list:
                 # numeric_Age_result_array = [int(element) for element in Age_result_array]
                 # print(cleaned_Age_string)
                 sex_Column_data = np.append(sex_Column_data, cleaned_Sex_string)
-print(age_Column_data)
+# print(age_Column_data)
+# print(ecg_Column_data)
 newDF
-
+newDF['ECG'] = ecg_Column_data
 newDF['Age'] = age_Column_data
 # 获取最后一列的数据
 last_column = newDF.pop(newDF.columns[-1])
